@@ -20,14 +20,22 @@ print audio.shape[0]/rate
 left_ = audio[:,0]
 
 #f, t, Sxx = scipy.signal.spectrogram(left_,rate/40.,nperseg=1024,noverlap=512,return_onesided=True)
-f, t, Zxx = scipy.signal.stft(left_, rate, nperseg=2048)
+f, t, Zxx = scipy.signal.stft(left_, rate, nperseg=14400)
+
+print np.abs(Zxx)
+
+#Zxx = np.where(np.abs(Zxx) >= .001, Zxx, 0)
+
+t2, x = scipy.signal.istft(Zxx,rate)#,nperseg=2048)
+
+scipy.io.wavfile.write('out.wav',rate,left_)
 
 print Zxx.shape
 
 print f, Zxx
 print 'Max mel:',f2m(Zxx.shape[1])
 
-plt.pcolormesh(t,f,Zxx)
+plt.pcolormesh(t,f,np.abs(Zxx))
 #plt.yscale('log')
 
 plt.show()

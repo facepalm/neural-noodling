@@ -23,7 +23,7 @@ print audio.shape[0]/rate
 left_ = audio[:,0]
 
 #f, t, Sxx = scipy.signal.spectrogram(left_,rate/40.,nperseg=1024,noverlap=512,return_onesided=True)
-f, t, Zxx = scipy.signal.stft(left_, rate, nperseg=1024)
+f, t, Zxx = scipy.signal.stft(left_, rate, nperseg=1022)
 
 #Zxx = np.real(Zxx)
 #Zxx = np.imag(Zxx)

@@ -8,7 +8,7 @@ import numpy as np
 def f2m(freq): #frequency to melody scale
     return 1127*np.log(1+freq/700.)
 
-song = AudioSegment.from_mp3('13 - Laika.mp3')
+song = AudioSegment.from_mp3('Stellardrone - Between The Rings - 01 To The Great Beyond.mp3')
 song.export('temp.wav',format='wav')
 
 rate, audio = scipy.io.wavfile.read('temp.wav')

@@ -2,6 +2,7 @@ from pydub import AudioSegment
 import scipy.io.wavfile
 from scipy.signal import spectrogram, stft, istft
 from matplotlib import pyplot as plt
+import python_speech_features as psf
 
 import numpy as np
 
@@ -17,28 +18,33 @@ song.export('temp.wav',format='wav')
 rate, audio = scipy.io.wavfile.read('temp.wav')
 
 
-print rate, audio.shape
-print audio.shape[0]/rate
+print (rate, audio.shape)
+print (audio.shape[0]/rate)
 
 left_ = audio[:,0]
 
 #f, t, Sxx = scipy.signal.spectrogram(left_,rate/40.,nperseg=1024,noverlap=512,return_onesided=True)
-f, t, Zxx = scipy.signal.stft(left_, rate, nperseg=1022)
+#f, t, Zxx = scipy.signal.stft(left_, rate, nperseg=1022)
+
+mfcc = psf.base.mfcc(left_,samplerate=rate,numcep=26,nfft=1028)
+
+print (mfcc.shape)
+print(mfcc)
 
 #Zxx = np.real(Zxx)
 #Zxx = np.imag(Zxx)
 #Zxx = np.where(np.abs(Zxx) >= .001, Zxx, 0)
 
-t2, x = scipy.signal.istft(Zxx,rate)#,nperseg=2048)
+#t2, x = scipy.signal.istft(Zxx,rate)#,nperseg=2048)
 
-scipy.io.wavfile.write('out.wav',rate,x.astype(np.int16))
+#scipy.io.wavfile.write('out.wav',rate,x.astype(np.int16))
 
-print Zxx.shape
+#print (Zxx.shape)
 #print Zxx[:,0]
 #print f, Zxx
-print 'Max mel:',f2m(Zxx.shape[1])
+#print( 'Max mel:',f2m(Zxx.shape[1]))
 
-#plt.pcolormesh(t,f,np.abs(Zxx))
+plt.pcolormesh(mfcc.T)
 #plt.yscale('log')
 
-#plt.show()
+plt.show()

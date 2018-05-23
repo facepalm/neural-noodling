@@ -1,9 +1,11 @@
+
 from pydub import AudioSegment
 import scipy.io.wavfile
 from scipy.signal import spectrogram, stft, istft
 from matplotlib import pyplot as plt
 import python_speech_features as psf
-
+import keras
+from keras.layers import Dense, Flatten, Input, Dropout
 import numpy as np
 
 def f2m(freq): #frequency to melody scale
@@ -12,39 +14,54 @@ def f2m(freq): #frequency to melody scale
 mp3 = 'Stellardrone - Between The Rings - 01 To The Great Beyond.mp3'
 #mp3 = '../13 - Laika.mp3'
 
-song = AudioSegment.from_mp3(mp3)
-song.export('temp.wav',format='wav')
+def make_mfcc_training_data(mp3):
+    AudioSegment.from_mp3(mp3).export('temp.wav',format='wav')
+    rate, audio = scipy.io.wavfile.read('temp.wav')
+    stride = int(0.01*rate)
+    left_ = audio[:,0]
+    fbank = psf.base.fbank(left_,samplerate=rate,nfft=1103)
+    mfcc = psf.base.mfcc(left_,samplerate=rate,numcep=15,nfft=1103)
+    train_x = np.append(mfcc, np.expand_dims(fbank[1],axis=1),axis=1)
+    train_y = np.zeros((mfcc.shape[0],stride),dtype=np.float32)
 
-rate, audio = scipy.io.wavfile.read('temp.wav')
+    for a in range(mfcc.shape[0]):
+        #print(rate*a,int((a+ .01)*rate))
+        train_y[a,:] = left_[stride*a:stride*(a+1)]
+
+    #normalize data for return
+    train_x = train_x + abs(train_x.min(axis=0))
+    train_x = train_x / train_x.max(axis=0)
+    train_y = train_y + abs(train_y.min())
+    train_y = train_y / train_y.max()
+    print(train_x[10000],train_y[10000])
+    return train_x, train_y
+
+train_x, train_y = make_mfcc_training_data(mp3)
+
+input = Input( shape = (16,) )
+print (input.shape)
+#x = Flatten()(input)
+x = Dense( 1000, activation='relu' )(input)
+x = Dropout(0.25)(x)
+out = Dense(441,activation='sigmoid')(x)
+
+model = keras.models.Model( inputs = input, outputs = out)
+
+opt = keras.optimizers.SGD(lr=0.05)
+model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+
+'''his = model.fit(x=train_x,
+        y = train_y_all[:,0], class_weight=class_weight,
+        batch_size=BATCHSIZE, epochs=20, validation_split=0.1,
+        verbose=2, callbacks=[stop])'''
+
+BATCHSIZE = 16
+his = model.fit(x=train_x, y = train_y,
+        batch_size=BATCHSIZE, epochs=100, validation_split=0.1,
+        verbose=1, callbacks=[])#stop])
 
 
-print (rate, audio.shape)
-print (audio.shape[0]/rate)
-
-left_ = audio[:,0]
-
-#f, t, Sxx = scipy.signal.spectrogram(left_,rate/40.,nperseg=1024,noverlap=512,return_onesided=True)
-#f, t, Zxx = scipy.signal.stft(left_, rate, nperseg=1022)
-
-mfcc = psf.base.mfcc(left_,samplerate=rate,numcep=26,nfft=1028)
-
-print (mfcc.shape)
-print(mfcc)
-
-#Zxx = np.real(Zxx)
-#Zxx = np.imag(Zxx)
-#Zxx = np.where(np.abs(Zxx) >= .001, Zxx, 0)
-
-#t2, x = scipy.signal.istft(Zxx,rate)#,nperseg=2048)
-
-#scipy.io.wavfile.write('out.wav',rate,x.astype(np.int16))
-
-#print (Zxx.shape)
-#print Zxx[:,0]
-#print f, Zxx
-#print( 'Max mel:',f2m(Zxx.shape[1]))
-
-plt.pcolormesh(mfcc.T)
+#plt.pcolormesh(mfcc.T)
 #plt.yscale('log')
 
-plt.show()
+#plt.show()

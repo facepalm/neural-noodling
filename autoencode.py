@@ -36,7 +36,26 @@ def make_mfcc_training_data(mp3):
     print(train_x[10000],train_y[10000])
     return train_x, train_y
 
+def data_gen(train_x,train_y, batchsize=8):
+    while True:
+        batch_x = np.zeros((batchsize,3,train_x.shape[1]))
+        batch_y = np.zeros((batchsize,train_y.shape[1]))
+        for es in range(train_x.shape[0]):
+
+
+            for i in range(3):
+                batch_x[es % batchsize,i,:] = train_x[es - i]
+            batch_y[es % batchsize,:] = train_y[es,:]
+            if es % batchsize == batchsize-1:
+                yield batch_x, batch_y
+                batch_x = np.zeros((batchsize,3,train_x.shape[1]))
+                batch_y = np.zeros((batchsize,train_y.shape[1]))
+
+
 train_x, train_y = make_mfcc_training_data(mp3)
+gen = data_gen(train_x,train_y,batchsize=8)
+for bx,by in gen:
+    print (bx.shape,by.shape)
 
 input = Input( shape = (16,) )
 print (input.shape)
